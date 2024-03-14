@@ -1,5 +1,8 @@
+import os
+import secrets
+from flask import current_app
 from flask import render_template, url_for, flash, redirect, request
-from flaskblog.forms import RegistrationForm, LoginForm
+from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm
 from flaskblog.models import User, Post
 from flaskblog import app, db, bcrypt
 from flask_login import login_user, current_user, logout_user, login_required
@@ -73,7 +76,34 @@ def logout():
     logout_user()
     return redirect(url_for("home"))
 
-@app.route("/account")
+
+
+def save_pic(form_pic):
+    random_hex = secrets.token_hex(6)
+    _, file_ext = os.path.splitext(form_pic.filename)  # Extract filename from FileStorage object
+    picture_name = random_hex + file_ext
+    picture_path = os.path.join(current_app.root_path, 'static/profile_pics', picture_name)
+    form_pic.save(picture_path)
+    
+    return picture_name
+
+
+
+@app.route("/account", methods=["GET", "POST"])
 @login_required
 def account():
-    return render_template("account.html", title="Account")
+    form = UpdateAccountForm()
+    if form.validate_on_submit():
+        if form.picture:
+            picture_file = save_pic(form.picture.data)
+            current_user.image_file = picture_file
+            db.session.commit()
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        db.session.commit()
+        flash("Your account has been updated", category="success")
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+    image_file = url_for("static", filename="profile_pics/" + current_user.image_file)
+    return render_template("account.html", title="Account", image_file=image_file, form=form)
