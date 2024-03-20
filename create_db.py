@@ -1,7 +1,6 @@
-from flaskblog import app, db  # Import your Flask app instance and SQLAlchemy object
-from flaskblog.models import User, Post  # Import your SQLAlchemy models
+import secrets
 
-# Create all database tables
-with app.app_context():
-    posts = Post.query.paginate()
-    print(posts.total)
+# Generate a random string of 24 bytes
+secret_key = secrets.token_hex(16).decode('utf-8')
+
+print(secret_key)

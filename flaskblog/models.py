@@ -1,7 +1,8 @@
 from datetime import datetime
-from itsdangerous import URLSafeTimedSerializer as Serializer
+from itsdangerous import URLSafeTimedSerializer
 from flaskblog import db, login_manager, app
 from flask_login import UserMixin
+from flask import current_app
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -15,12 +16,29 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(60), nullable=False)
     posts = db.relationship('Post', backref='author', lazy=True)
 
+
     def get_reset_token(self, expires_sec=1800):
-        pass
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        return serializer.dumps({'user_id': self.id}, salt='reset_token')
 
     @staticmethod
     def verify_reset_token(token):
-        pass
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        try:
+            data = serializer.loads(token, salt='reset_token')
+            user_id = int(data.get('user_id'))  # Retrieving 'user_id' from token data
+        except Exception as e:
+            print(f"Error verifying reset token: {e}")
+            return None
+
+        # Returning None if 'user_id' is not present or if User not found
+        if not user_id:
+            return None
+
+        return User.query.get(user_id)
+
+
+
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.image_file}')"
