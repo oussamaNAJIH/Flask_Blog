@@ -5,7 +5,8 @@ from flask import current_app
 from flask import render_template, url_for, flash, redirect, request, abort
 from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
 from flaskblog.models import User, Post
-from flaskblog import app, db, bcrypt
+from flaskblog import app, db, bcrypt, mail
+from flask_mail import Message
 from flask_login import login_user, current_user, logout_user, login_required
 
 
@@ -155,3 +156,16 @@ def user_posts(username):
     user = User.query.filter_by(username=username).first_or_404()
     posts = Post.query.filter_by(author=user).order_by(Post.date_posted.desc()).paginate(per_page=5, page=page)
     return render_template("user_posts.html", user=user, posts=posts)
+
+
+def send_reset_email(user):
+    pass
+
+@app.route("/reset_password", methods=["GET", "POST"])
+def reset_request():
+    pass
+
+
+@app.route("/reset_password/token", methods=["GET", "POST"])
+def reset_token(token):
+    pass
